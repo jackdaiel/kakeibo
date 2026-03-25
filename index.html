@@ -556,6 +556,7 @@ const MC_CHIPS = {
 // ══════════════════════════════════════════
 let FY = 2025;
 let eMode = null, eCat = null, eSubtype = null;
+let _editingId = null; // 編集中エントリID
 let mcType = null;
 let histFil = 'all', mcHistFil = 'all';
 
@@ -998,18 +999,31 @@ function submitEntry() {
   if (!date||isNaN(amt)||amt<=0){showToast('日付と金額を入力してください');return;}
   if (!eCat){showToast('カテゴリを選んでください');return;}
   const cat=eMode==='income'?'income':eCat.key;
-  const e={id:Date.now(),date,amount:amt,memo:memo?`（${memo}）`:'',type:eSubtype,mode:eMode,cat};
+  // 編集モード：旧データを削除
+  if (_editingId !== null) {
+    const allCats=['income','seikatsuhi','shokuhi','iryohi','gaishoku','ifuku','ryoko','teikik','sonota','mycar'];
+    allCats.forEach(c2=>{_cache[K(c2)]=loadD(c2).filter(e=>e.id!==_editingId);});
+    gasDelete(_editingId);
+  }
+  const newId = _editingId !== null ? _editingId : Date.now();
+  const e={id:newId,date,amount:amt,memo:memo?`（${memo}）`:'',type:eSubtype,mode:eMode,cat};
   const d=loadD(cat);
   d.push(e);
   d.sort((a,b)=>new Date(a.date)-new Date(b.date));
   _cache[K(cat)]=d;
   gasAppend(entryToRow(e, cat));
-  showToast('✓ ' + eCat.label + ' を記録しました', 'success');
+  const msg = _editingId !== null ? '✓ 更新しました' : '✓ ' + eCat.label + ' を記録しました';
+  showToast(msg, 'success');
+  // 編集モード解除
+  _editingId = null;
+  const btn = document.getElementById('e-sub-btn');
+  btn.textContent = '記録する';
+  btn.className = 'submit-btn';
   document.getElementById('e-amt').value='';
   document.getElementById('e-memo').value='';
   document.getElementById('e-date').value=today();
   document.getElementById('e-amt').focus();
-  renderRecent();
+  renderRecent(); renderHistory(); renderSummary();
 }
 
 // ══════════════════════════════════════════
@@ -1062,6 +1076,7 @@ function eHtml(e) {
     <span class="ebadge ${isInc?'b-inc':'b-exp'}">${catL}</span>
     <span class="etext">${label}${e.memo?'　'+e.memo:''}</span>
     <span class="eamt ${isInc?'inc-c':''}">${isInc?'+':''}¥${fmt(e.amount)}</span>
+    <button class="edel" onclick="editEntry('${e.cat}',${e.id})" title="編集" style="color:#b0c4cc">✏️</button>
     <button class="edel" onclick="delEntry('${e.cat}',${e.id})">✕</button>
   </div>`;
 }
@@ -1071,6 +1086,58 @@ function delEntry(cat,id){
   gasDelete(id);
   renderRecent(); renderHistory(); renderSummary();
   showToast('削除しました');
+}
+
+function editEntry(cat, id) {
+  // 全カテゴリからエントリを検索
+  const allCats=['income','seikatsuhi','shokuhi','iryohi','gaishoku','ifuku','ryoko','teikik','sonota','mycar'];
+  let entry = null;
+  allCats.forEach(c2 => { const f=loadD(c2).find(e=>e.id===id); if(f) entry={...f,cat:c2}; });
+  if (!entry) { showToast('データが見つかりません','error'); return; }
+
+  const preview = entry.date + '　' + (CL[entry.cat]||entry.cat) + '　¥' + fmt(entry.amount);
+  if (!confirm('編集しますか？\n' + preview + '\n\n修正後に「更新する」を押してください。')) return;
+
+  _editingId = id;
+
+  // 入力ページへ移動
+  showTab('entry');
+
+  // 収支モード設定
+  const mode = entry.mode || (entry.cat==='income'?'income':'expense');
+  // btn-exp / btn-inc を直接クリック
+  const modeBtn = document.getElementById(mode==='income'?'btn-inc':'btn-exp');
+  if (modeBtn) modeBtn.click();
+
+  // 少し待ってからカテゴリ・日付・金額・メモをセット
+  setTimeout(() => {
+    // カテゴリ選択
+    const cats = mode==='income' ? INC_CATS : EXP_CATS;
+    const catIdx = cats.findIndex(c2 => c2.key === entry.cat ||
+      (mode==='income' && entry.type && c2.subs.some(s=>s.v===entry.type)));
+    if (catIdx >= 0) {
+      const catBtns = document.querySelectorAll('#cat-grid .cat-btn');
+      if (catBtns[catIdx]) catBtns[catIdx].click();
+    }
+
+    setTimeout(() => {
+      // 種別（subtype）
+      if (entry.type) {
+        const sel = document.getElementById('sub-sel');
+        if (sel) { sel.value = entry.type; eSubtype = entry.type; }
+      }
+      // 日付（calPickで選択状態も更新）
+      calPick('e-cal','e-date',entry.date);
+      // 金額
+      document.getElementById('e-amt').value = entry.amount;
+      // メモ（括弧を除去して表示）
+      document.getElementById('e-memo').value = entry.memo.replace(/^（|）$/g,'');
+      // ボタン変更
+      const btn = document.getElementById('e-sub-btn');
+      btn.textContent = '✔ 更新する';
+      btn.className = 'submit-btn' + (mode==='income'?' inc':'');
+    }, 100);
+  }, 150);
 }
 
 function setFil(f,btn){
