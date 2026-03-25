@@ -671,12 +671,22 @@ function gasDelete(id) {
 
 
 // ── 起動時にSSから全データ読み込み ──
+let _lastLoaded = 0; // 最終読み込み時刻
+let _loading = false; // 多重実行防止
+
 async function loadAllFromGAS(silent=false) {
+  // 多重実行防止
+  if (_loading) return;
+  // silent時：前回読み込みから20秒以内はスキップ
+  if (silent && Date.now() - _lastLoaded < 20000) return;
+
+  _loading = true;
   if (!silent) showToast('データを読み込み中…');
-  _cache = {};
 
   const dataRes = await gasFetch({sheet: 'data'}).catch(()=>{return {rows:[]}});
 
+  // 取得完了後に一括差し替え（途中で2重にならない）
+  const newCache = {};
   if (dataRes.rows && dataRes.rows.length > 1) {
     dataRes.rows.forEach(row => {
       const e = rowToEntry(row);
@@ -684,13 +694,15 @@ async function loadAllFromGAS(silent=false) {
       try {
         const fp = getFiscalPeriod(e.date);
         const key = `${fp.fy}_${e.cat}`;
-        if (!_cache[key]) _cache[key] = [];
-        _cache[key].push(e);
+        if (!newCache[key]) newCache[key] = [];
+        newCache[key].push(e);
       } catch(err) {}
     });
   }
-
+  _cache = newCache;
   _loaded = true;
+  _lastLoaded = Date.now();
+  _loading = false;
   if (!silent) showToast('読み込み完了');
   renderAll();
 }
@@ -748,10 +760,10 @@ document.addEventListener('DOMContentLoaded', () => {
   showTab('entry');
   loadAllFromGAS();
 
-  // 30秒ごとに自動同期（タブがアクティブな時のみ）
+  // 60秒ごとに自動同期（タブがアクティブな時のみ）
   setInterval(() => {
     if (!document.hidden) loadAllFromGAS(true);
-  }, 30000);
+  }, 60000);
 
   // タブが再びアクティブになった時も同期
   document.addEventListener('visibilitychange', () => {
@@ -1082,6 +1094,10 @@ function eHtml(e) {
 }
 
 function delEntry(cat,id){
+  const entry = loadD(cat).find(e=>e.id===id);
+  if (!entry) return;
+  const label = (CL[cat]||cat) + '　¥' + fmt(entry.amount) + '　' + entry.date;
+  if (!confirm('この記録を削除しますか？\n\n' + label)) return;
   _cache[K(cat)]=loadD(cat).filter(e=>e.id!==id);
   gasDelete(id);
   renderRecent(); renderHistory(); renderSummary();
