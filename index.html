@@ -228,6 +228,17 @@
   .fbar { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.6rem; align-items:center; }
   .flbl { font-size:.76rem; color:var(--muted); }
   .fp { padding:.28rem .65rem; border:1px solid var(--border); border-radius:20px; background:#fff; color:var(--muted); font-size:.8rem; cursor:pointer; transition:all .15s; font-family:var(--font); font-weight:300; }
+  /* 3階層フィルターツリー */
+  .hist-filter-tree { background:#faf9f6; border:1px solid var(--border); border-radius:8px; padding:.6rem .75rem; }
+  .hft-row { display:flex; flex-wrap:wrap; align-items:center; gap:.3rem; }
+  .hft-l2 { margin-top:.4rem; padding-left:.2rem; }
+  .hft-l3 { margin-top:.35rem; padding-left:.4rem; border-top:1px dashed var(--border); padding-top:.35rem; }
+  .hft-indent { width:10px; flex-shrink:0; }
+  .hft-branch-label { color:var(--border); font-size:.85rem; font-family:monospace; flex-shrink:0; }
+  .hft-all.on  { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .hft-inc.on  { background:#2d7a4e; color:#fff; border-color:#2d7a4e; }
+  .hft-exp.on  { background:#c03030; color:#fff; border-color:#c03030; }
+  .hft-l3 .fp.on { background:#7a5c2d; color:#fff; border-color:#7a5c2d; }
   .fp:hover { border-color:var(--ink); color:var(--ink); }
   .fp.on { background:var(--ink); color:#fff; border-color:var(--ink); }
 
@@ -393,20 +404,29 @@
         <div class="fp on" onclick="setDsMonth(-1,this)" data-m="-1">全月</div>
       </div>
     </div>
-    <!-- カテゴリフィルター -->
-    <div style="margin-bottom:.6rem">
-      <div class="flbl" style="margin-bottom:.3rem">📂 カテゴリ</div>
-      <div class="fbar">
-        <span class="flbl">絞り込み：</span>
-        <div class="fp on" onclick="setFil('all',this)">すべて</div>
-        <div class="fp" onclick="setFil('income',this)">💴 収入</div>
+    <!-- カテゴリフィルター（3階層） -->
+    <div class="hist-filter-tree" style="margin-bottom:.6rem">
+      <!-- 第1階層：すべて -->
+      <div class="hft-row">
+        <div class="fp on hft-all" id="hft-all" onclick="setFil('all',this)">すべて</div>
+      </div>
+      <!-- 第2階層：収入 / 支出 -->
+      <div class="hft-row hft-l2">
+        <div class="hft-branch-label">├</div>
+        <div class="fp hft-inc" id="hft-income" onclick="setFil('income',this)">💴 収入</div>
+        <div class="hft-branch-label" style="margin-left:.4rem">└</div>
+        <div class="fp hft-exp" id="hft-expense" onclick="setFil('expense',this)">💸 支出</div>
+      </div>
+      <!-- 第3階層：支出の各項目 -->
+      <div class="hft-row hft-l3" id="hft-exp-items">
+        <div class="hft-indent"></div>
+        <div class="fp" onclick="setFil('seikatsuhi',this)">🏠 生活費</div>
         <div class="fp" onclick="setFil('shokuhi',this)">🍚 食費</div>
         <div class="fp" onclick="setFil('iryohi',this)">💊 医療</div>
         <div class="fp" onclick="setFil('gaishoku',this)">🍜 外食</div>
         <div class="fp" onclick="setFil('ifuku',this)">👗 衣服</div>
         <div class="fp" onclick="setFil('ryoko',this)">✈️ 旅行</div>
-        <div class="fp" onclick="setFil('seikatsuhi',this)">🏠 生活費</div>
-        <div class="fp" onclick="setFil('teikik',this)">🔄 定期購入</div>
+        <div class="fp" onclick="setFil('teikik',this)">🔄 定期</div>
         <div class="fp" onclick="setFil('sonota',this)">📦 その他</div>
       </div>
     </div>
@@ -1080,7 +1100,13 @@ function getAllEntries(filterCat) {
   const cats=['income','seikatsuhi','shokuhi','iryohi','gaishoku','ifuku','ryoko','teikik','sonota'];
   let all=[];
   cats.forEach(cat=>{
-    if (filterCat!=='all'&&filterCat!==cat) return;
+    if (filterCat==='all') {
+      // すべて
+    } else if (filterCat==='expense') {
+      if (cat==='income') return; // 収入を除外
+    } else {
+      if (filterCat!==cat) return;
+    }
     loadD(cat).filter(e=>isFY(e.date)).forEach(e=>all.push({...e,cat}));
   });
   return all.sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -1106,7 +1132,7 @@ function renderHistory() {
       bar.style.display='none';
     } else {
       const barCls = hasI&&hasE?'bar-mix':hasI?'bar-inc':hasE?'bar-exp':'bar-all';
-      const catLabel = histFil==='all'?'すべて':(CL[histFil]||histFil);
+      const catLabel = histFil==='all'?'すべて':histFil==='expense'?'支出':(CL[histFil]||histFil);
       const mLabel   = histMonthDs>=0?MONTHS[histMonthDs]:'全月';
       let mainAmt, subHtml='';
       if (hasI&&hasE) {
@@ -1238,10 +1264,23 @@ function editEntry(cat, id) {
   }, 150);
 }
 
-function setFil(f,btn){
-  histFil=f;
-  document.querySelectorAll('#page-history .fp').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
+function setFil(f, btn) {
+  histFil = f;
+  // 全ボタンのonを外す
+  document.querySelectorAll('#page-history .fp').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  // 親階層のハイライト
+  if (f === 'all') {
+    // なにもしない（すべてのみon）
+  } else if (f === 'income') {
+    // 収入ボタンのみon（済み）
+  } else if (f === 'expense') {
+    // 支出ボタンのみon（済み）
+  } else {
+    // 個別項目 → 支出ボタンも薄くハイライト
+    const expBtn = document.getElementById('hft-expense');
+    if (expBtn) expBtn.style.borderColor = '#c03030';
+  }
   renderHistory();
 }
 
