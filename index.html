@@ -185,6 +185,27 @@
   /* Entry list */
   .elist { background:#fff; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
   .mhdr { background:var(--cream); padding:.35rem .75rem; font-size:.77rem; color:var(--muted); font-weight:400; display:flex; justify-content:space-between; align-items:center; }
+  /* 合計バー */
+  .ds-tot-bar { border-radius:8px; padding:.75rem 1rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 3px 12px rgba(0,0,0,.12); }
+  .ds-tot-bar.bar-exp { background:linear-gradient(135deg,#e05555,#c03030); }
+  .ds-tot-bar.bar-inc { background:linear-gradient(135deg,#3aaa6e,#237a4e); }
+  .ds-tot-bar.bar-mix { background:linear-gradient(135deg,#4a6fa5,#2d4d7a); }
+  .ds-tot-bar.bar-all { background:linear-gradient(135deg,#555,#333); }
+  .dtb-left { display:flex; flex-direction:column; gap:.15rem; }
+  .dtb-label { font-size:.68rem; font-weight:500; color:rgba(255,255,255,.7); letter-spacing:.08em; }
+  .dtb-amount { font-size:1.35rem; font-weight:700; color:#fff; font-family:var(--font-mono); }
+  .dtb-right { display:flex; flex-direction:column; align-items:flex-end; gap:.2rem; }
+  .dtb-sub { font-size:.72rem; color:rgba(255,255,255,.8); font-family:var(--font-mono); }
+  .dtb-count { font-size:.68rem; color:rgba(255,255,255,.6); }
+  /* 月ヘッダー改善 */
+  .mhdr-new { padding:.5rem .75rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+  .mhdr-month { font-size:.82rem; font-weight:600; color:var(--ink); }
+  .mhdr-stats { display:flex; gap:.6rem; align-items:center; }
+  .mhdr-inc { font-size:.75rem; color:var(--green); font-family:var(--font-mono); font-weight:500; }
+  .mhdr-exp { font-size:.75rem; color:var(--red); font-family:var(--font-mono); font-weight:500; }
+  .mhdr-bal { font-size:.75rem; font-family:var(--font-mono); font-weight:600; padding:.1rem .4rem; border-radius:4px; }
+  .mhdr-bal.pos { background:#e8f7ee; color:var(--green); }
+  .mhdr-bal.neg { background:#fdf0f0; color:var(--red); }
   .mttl { font-weight:500; color:var(--ink); font-family:var(--font-mono); }
   .ei { padding:.42rem .75rem; display:flex; align-items:center; gap:.5rem; border-bottom:1px solid var(--cream); transition:background .1s; }
   .ei:last-child { border-bottom:none; }
@@ -365,19 +386,32 @@
 
   <!-- ══════════ HISTORY ══════════ -->
   <div id="page-history" class="hidden">
-    <div class="fbar">
-      <span class="flbl">絞り込み：</span>
-      <div class="fp on" onclick="setFil('all',this)">すべて</div>
-      <div class="fp" onclick="setFil('income',this)">💴 収入</div>
-      <div class="fp" onclick="setFil('shokuhi',this)">🍚 食費</div>
-      <div class="fp" onclick="setFil('iryohi',this)">💊 医療</div>
-      <div class="fp" onclick="setFil('gaishoku',this)">🍜 外食</div>
-      <div class="fp" onclick="setFil('ifuku',this)">👗 衣服</div>
-      <div class="fp" onclick="setFil('ryoko',this)">✈️ 旅行</div>
-      <div class="fp" onclick="setFil('seikatsuhi',this)">🏠 生活費</div>
-      <div class="fp" onclick="setFil('teikik',this)">🔄 定期購入</div>
-      <div class="fp" onclick="setFil('sonota',this)">📦 その他</div>
+    <!-- 月フィルター -->
+    <div style="margin-bottom:.5rem">
+      <div class="flbl" style="margin-bottom:.3rem">📅 月</div>
+      <div class="fbar" id="hf-month-ds">
+        <div class="fp on" onclick="setDsMonth(-1,this)" data-m="-1">全月</div>
+      </div>
     </div>
+    <!-- カテゴリフィルター -->
+    <div style="margin-bottom:.6rem">
+      <div class="flbl" style="margin-bottom:.3rem">📂 カテゴリ</div>
+      <div class="fbar">
+        <span class="flbl">絞り込み：</span>
+        <div class="fp on" onclick="setFil('all',this)">すべて</div>
+        <div class="fp" onclick="setFil('income',this)">💴 収入</div>
+        <div class="fp" onclick="setFil('shokuhi',this)">🍚 食費</div>
+        <div class="fp" onclick="setFil('iryohi',this)">💊 医療</div>
+        <div class="fp" onclick="setFil('gaishoku',this)">🍜 外食</div>
+        <div class="fp" onclick="setFil('ifuku',this)">👗 衣服</div>
+        <div class="fp" onclick="setFil('ryoko',this)">✈️ 旅行</div>
+        <div class="fp" onclick="setFil('seikatsuhi',this)">🏠 生活費</div>
+        <div class="fp" onclick="setFil('teikik',this)">🔄 定期購入</div>
+        <div class="fp" onclick="setFil('sonota',this)">📦 その他</div>
+      </div>
+    </div>
+    <!-- 合計バー -->
+    <div id="ds-total-bar" style="display:none;margin-bottom:.6rem"></div>
     <div class="elist" id="hist-list"></div>
   </div>
 
@@ -559,6 +593,7 @@ let eMode = null, eCat = null, eSubtype = null;
 let _editingId = null; // 編集中エントリID
 let mcType = null;
 let histFil = 'all', mcHistFil = 'all';
+let histMonthDs = -1; // D's Finance履歴月フィルター(-1=全月)
 
 // ══════════════════════════════════════════
 // DATA — GAS（2026data シート一本化）
@@ -906,7 +941,7 @@ function showTab(tab) {
   const renders = {
     'summary': () => { renderSummary(); },
     'entry': renderRecent,
-    'history': renderHistory,
+    'history': () => { buildDsMonthButtons(); renderHistory(); },
     'mc-entry': renderMcRecent,
     'mc-summary': ()=>{},
     'mc-history': ()=>{},
@@ -1056,7 +1091,44 @@ function renderRecent() {
 }
 
 function renderHistory() {
-  renderEList('hist-list', getAllEntries(histFil), true);
+  let entries = getAllEntries(histFil);
+  // 月フィルター適用
+  if (histMonthDs >= 0) entries = entries.filter(e => getFMI(e.date) === histMonthDs);
+
+  // 合計バー
+  const bar = document.getElementById('ds-total-bar');
+  if (bar) {
+    const totI = entries.filter(e=>e.cat==='income').reduce((s,e)=>s+e.amount,0);
+    const totE = entries.filter(e=>e.cat!=='income').reduce((s,e)=>s+e.amount,0);
+    const bal  = totI - totE;
+    const hasI = totI>0, hasE = totE>0;
+    if (!entries.length) {
+      bar.style.display='none';
+    } else {
+      const barCls = hasI&&hasE?'bar-mix':hasI?'bar-inc':hasE?'bar-exp':'bar-all';
+      const catLabel = histFil==='all'?'すべて':(CL[histFil]||histFil);
+      const mLabel   = histMonthDs>=0?MONTHS[histMonthDs]:'全月';
+      let mainAmt, subHtml='';
+      if (hasI&&hasE) {
+        mainAmt=`収支 ${bal>=0?'+':'−'}¥${fmt(Math.abs(bal))}`;
+        subHtml=`<div class="dtb-sub">収入 +¥${fmt(totI)}</div><div class="dtb-sub">支出 −¥${fmt(totE)}</div>`;
+      } else if (hasI) {
+        mainAmt=`+¥${fmt(totI)}`;
+      } else {
+        mainAmt=`¥${fmt(totE)}`;
+      }
+      bar.style.display='block';
+      bar.innerHTML=`<div class="ds-tot-bar ${barCls}">
+        <div class="dtb-left">
+          <div class="dtb-label">${mLabel} · ${catLabel}</div>
+          <div class="dtb-amount">${mainAmt}</div>
+        </div>
+        <div class="dtb-right">${subHtml}<div class="dtb-count">${entries.length}件</div></div>
+      </div>`;
+    }
+  }
+
+  renderEList('hist-list', entries, histMonthDs < 0);
 }
 
 function renderEList(id, entries, grouped) {
@@ -1070,8 +1142,18 @@ function renderEList(id, entries, grouped) {
     const list=groups[fm];
     const tI=list.filter(e=>e.cat==='income').reduce((s,e)=>s+e.amount,0);
     const tE=list.filter(e=>e.cat!=='income').reduce((s,e)=>s+e.amount,0);
+    const bal=tI-tE;
+    const balCls=bal>=0?'pos':'neg';
+    const balStr=(bal>=0?'+':'-')+'¥'+fmt(Math.abs(bal));
     html+=`<div style="border-bottom:1px solid var(--border)">
-      <div class="mhdr"><span>${MONTHS[fm]}</span><span class="mttl">収入 +${fmt(tI)} / 支出 −${fmt(tE)}</span></div>
+      <div class="mhdr-new">
+        <span class="mhdr-month">${MONTHS[fm]}</span>
+        <div class="mhdr-stats">
+          ${tI>0?`<span class="mhdr-inc">+¥${fmt(tI)}</span>`:''}
+          ${tE>0?`<span class="mhdr-exp">-¥${fmt(tE)}</span>`:''}
+          ${tI>0&&tE>0?`<span class="mhdr-bal ${balCls}">${balStr}</span>`:''}
+        </div>
+      </div>
       ${list.map(e=>eHtml(e)).join('')}
     </div>`;
   });
@@ -1161,6 +1243,22 @@ function setFil(f,btn){
   document.querySelectorAll('#page-history .fp').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   renderHistory();
+}
+
+function setDsMonth(m, btn) {
+  histMonthDs = m;
+  document.querySelectorAll('#hf-month-ds .fp').forEach(b=>b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  renderHistory();
+}
+
+function buildDsMonthButtons() {
+  const el = document.getElementById('hf-month-ds');
+  if (!el) return;
+  el.innerHTML = `<div class="fp ${histMonthDs===-1?'on':''}" onclick="setDsMonth(-1,this)" data-m="-1">全月</div>` +
+    MONTHS.map((m,i) =>
+      `<div class="fp ${histMonthDs===i?'on':''}" onclick="setDsMonth(${i},this)" data-m="${i}">${m}</div>`
+    ).join('');
 }
 
 // ══════════════════════════════════════════
