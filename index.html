@@ -228,17 +228,23 @@
   .fbar { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.6rem; align-items:center; }
   .flbl { font-size:.76rem; color:var(--muted); }
   .fp { padding:.28rem .65rem; border:1px solid var(--border); border-radius:20px; background:#fff; color:var(--muted); font-size:.8rem; cursor:pointer; transition:all .15s; font-family:var(--font); font-weight:300; }
+  /* 月ボタン専用（fpと独立） */
+  .mfp { padding:.28rem .65rem; border:1px solid var(--border); border-radius:20px; background:#fff; color:var(--muted); font-size:.8rem; cursor:pointer; transition:all .15s; font-family:var(--font); font-weight:300; }
+  .mfp.on { background:#4a6fa5; color:#fff; border-color:#4a6fa5; font-weight:500; }
   /* 3階層フィルターツリー */
   .hist-filter-tree { background:#faf9f6; border:1px solid var(--border); border-radius:8px; padding:.6rem .75rem; }
   .hft-row { display:flex; flex-wrap:wrap; align-items:center; gap:.3rem; }
+  .hfs-chip { background:var(--ink); color:#fff; border-radius:20px; padding:.2rem .65rem; font-size:.78rem; font-weight:500; font-family:var(--font); }
+  .hfs-arrow { color:var(--muted); font-size:.85rem; }
   .hft-l2 { margin-top:.4rem; padding-left:.2rem; }
   .hft-l3 { margin-top:.35rem; padding-left:.4rem; border-top:1px dashed var(--border); padding-top:.35rem; }
   .hft-indent { width:10px; flex-shrink:0; }
   .hft-branch-label { color:var(--border); font-size:.85rem; font-family:monospace; flex-shrink:0; }
-  .hft-all.on  { background:var(--ink); color:#fff; border-color:var(--ink); }
-  .hft-inc.on  { background:#2d7a4e; color:#fff; border-color:#2d7a4e; }
-  .hft-exp.on  { background:#c03030; color:#fff; border-color:#c03030; }
-  .hft-l3 .fp.on { background:#7a5c2d; color:#fff; border-color:#7a5c2d; }
+  .hft-all.on   { background:var(--ink); color:#fff; border-color:var(--ink); font-weight:500; }
+  .hft-inc.on   { background:#2d7a4e; color:#fff; border-color:#2d7a4e; font-weight:500; }
+  .hft-exp.on   { background:#c03030; color:#fff; border-color:#c03030; font-weight:500; }
+  .hft-exp.parent-on { border-color:#c03030; color:#c03030; background:#fdf0f0; font-weight:500; }
+  .hft-l3 .fp.on { background:#c03030; color:#fff; border-color:#c03030; font-weight:500; }
   .fp:hover { border-color:var(--ink); color:var(--ink); }
   .fp.on { background:var(--ink); color:#fff; border-color:var(--ink); }
 
@@ -397,39 +403,36 @@
 
   <!-- ══════════ HISTORY ══════════ -->
   <div id="page-history" class="hidden">
-    <!-- 月フィルター -->
+
+    <!-- 月フィルター（JS生成） -->
     <div style="margin-bottom:.5rem">
-      <div class="flbl" style="margin-bottom:.3rem">📅 月</div>
-      <div class="fbar" id="hf-month-ds">
-        <div class="fp on" onclick="setDsMonth(-1,this)" data-m="-1">全月</div>
-      </div>
+      <div class="flbl" style="margin-bottom:.28rem">📅 月</div>
+      <div class="fbar" id="hf-month-ds"></div>
     </div>
-    <!-- カテゴリフィルター（3階層） -->
-    <div class="hist-filter-tree" style="margin-bottom:.6rem">
-      <!-- 第1階層：すべて -->
+
+    <!-- カテゴリフィルター（data-cat属性で管理） -->
+    <div class="hist-filter-tree" style="margin-bottom:.55rem">
       <div class="hft-row">
-        <div class="fp on hft-all" id="hft-all" onclick="setFil('all',this)">すべて</div>
+        <div class="hft-chip hft-all" data-cat="all"         onclick="setFil('all')">すべて</div>
       </div>
-      <!-- 第2階層：収入 / 支出 -->
       <div class="hft-row hft-l2">
-        <div class="hft-branch-label">├</div>
-        <div class="fp hft-inc" id="hft-income" onclick="setFil('income',this)">💴 収入</div>
-        <div class="hft-branch-label" style="margin-left:.4rem">└</div>
-        <div class="fp hft-exp" id="hft-expense" onclick="setFil('expense',this)">💸 支出</div>
+        <span class="hft-bl">├</span>
+        <div class="hft-chip hft-inc" data-cat="income"      onclick="setFil('income')">💴 収入</div>
+        <span class="hft-bl">└</span>
+        <div class="hft-chip hft-exp" data-cat="expense"     onclick="setFil('expense')">💸 支出</div>
       </div>
-      <!-- 第3階層：支出の各項目 -->
-      <div class="hft-row hft-l3" id="hft-exp-items">
-        <div class="hft-indent"></div>
-        <div class="fp" onclick="setFil('seikatsuhi',this)">🏠 生活費</div>
-        <div class="fp" onclick="setFil('shokuhi',this)">🍚 食費</div>
-        <div class="fp" onclick="setFil('iryohi',this)">💊 医療</div>
-        <div class="fp" onclick="setFil('gaishoku',this)">🍜 外食</div>
-        <div class="fp" onclick="setFil('ifuku',this)">👗 衣服</div>
-        <div class="fp" onclick="setFil('ryoko',this)">✈️ 旅行</div>
-        <div class="fp" onclick="setFil('teikik',this)">🔄 定期</div>
-        <div class="fp" onclick="setFil('sonota',this)">📦 その他</div>
+      <div class="hft-row hft-l3">
+        <div class="hft-chip hft-sub" data-cat="seikatsuhi"  onclick="setFil('seikatsuhi')">🏠 生活費</div>
+        <div class="hft-chip hft-sub" data-cat="shokuhi"     onclick="setFil('shokuhi')">🍚 食費</div>
+        <div class="hft-chip hft-sub" data-cat="iryohi"      onclick="setFil('iryohi')">💊 医療</div>
+        <div class="hft-chip hft-sub" data-cat="gaishoku"    onclick="setFil('gaishoku')">🍜 外食</div>
+        <div class="hft-chip hft-sub" data-cat="ifuku"       onclick="setFil('ifuku')">👗 衣服</div>
+        <div class="hft-chip hft-sub" data-cat="ryoko"       onclick="setFil('ryoko')">✈️ 旅行</div>
+        <div class="hft-chip hft-sub" data-cat="teikik"      onclick="setFil('teikik')">🔄 定期</div>
+        <div class="hft-chip hft-sub" data-cat="sonota"      onclick="setFil('sonota')">📦 その他</div>
       </div>
     </div>
+
     <!-- 合計バー -->
     <div id="ds-total-bar" style="display:none;margin-bottom:.6rem"></div>
     <div class="elist" id="hist-list"></div>
@@ -961,7 +964,7 @@ function showTab(tab) {
   const renders = {
     'summary': () => { renderSummary(); },
     'entry': renderRecent,
-    'history': () => { buildDsMonthButtons(); renderHistory(); },
+    'history': () => { buildDsMonthButtons(); applyFilterUI(); renderHistory(); },
     'mc-entry': renderMcRecent,
     'mc-summary': ()=>{},
     'mc-history': ()=>{},
@@ -1264,40 +1267,53 @@ function editEntry(cat, id) {
   }, 150);
 }
 
-function setFil(f, btn) {
+// ── フィルター管理（月・カテゴリを独立して管理）──
+const EXP_CATS_LIST = ['seikatsuhi','shokuhi','iryohi','gaishoku','ifuku','ryoko','teikik','sonota'];
+
+function setFil(f) {
   histFil = f;
-  // 全ボタンのonを外す
-  document.querySelectorAll('#page-history .fp').forEach(b => b.classList.remove('on'));
-  if (btn) btn.classList.add('on');
-  // 親階層のハイライト
-  if (f === 'all') {
-    // なにもしない（すべてのみon）
-  } else if (f === 'income') {
-    // 収入ボタンのみon（済み）
-  } else if (f === 'expense') {
-    // 支出ボタンのみon（済み）
-  } else {
-    // 個別項目 → 支出ボタンも薄くハイライト
-    const expBtn = document.getElementById('hft-expense');
-    if (expBtn) expBtn.style.borderColor = '#c03030';
-  }
+  applyFilterUI();
   renderHistory();
 }
 
-function setDsMonth(m, btn) {
+function setDsMonth(m) {
   histMonthDs = m;
-  document.querySelectorAll('#hf-month-ds .fp').forEach(b=>b.classList.remove('on'));
-  if (btn) btn.classList.add('on');
+  applyMonthUI();
   renderHistory();
+}
+
+// カテゴリUIのon/off（月ボタンに一切触れない）
+function applyFilterUI() {
+  document.querySelectorAll('.hft-chip').forEach(b => {
+    b.classList.remove('on','parent-on');
+  });
+  const chip = document.querySelector(`.hft-chip[data-cat="${histFil}"]`);
+  if (chip) chip.classList.add('on');
+  // 個別支出項目選択中 → 支出ボタンを親ハイライト
+  if (EXP_CATS_LIST.includes(histFil)) {
+    const expChip = document.querySelector('.hft-chip[data-cat="expense"]');
+    if (expChip) expChip.classList.add('parent-on');
+  }
+}
+
+// 月ボタンUIのon/off（カテゴリに一切触れない）
+function applyMonthUI() {
+  document.querySelectorAll('#hf-month-ds .mfp').forEach(b => {
+    b.classList.toggle('on', parseInt(b.dataset.m) === histMonthDs);
+  });
 }
 
 function buildDsMonthButtons() {
   const el = document.getElementById('hf-month-ds');
   if (!el) return;
-  el.innerHTML = `<div class="fp ${histMonthDs===-1?'on':''}" onclick="setDsMonth(-1,this)" data-m="-1">全月</div>` +
+  // 月ボタンは専用クラス mfp を使う（fpと混在させない）
+  el.innerHTML =
+    `<div class="mfp ${histMonthDs===-1?'on':''}" data-m="-1" onclick="setDsMonth(-1)">全月</div>` +
     MONTHS.map((m,i) =>
-      `<div class="fp ${histMonthDs===i?'on':''}" onclick="setDsMonth(${i},this)" data-m="${i}">${m}</div>`
+      `<div class="mfp ${histMonthDs===i?'on':''}" data-m="${i}" onclick="setDsMonth(${i})">${m}</div>`
     ).join('');
+  // カテゴリ状態はapplyFilterUIで別途管理
+  applyFilterUI();
 }
 
 // ══════════════════════════════════════════
