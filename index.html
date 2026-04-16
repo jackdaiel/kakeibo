@@ -113,7 +113,7 @@
 
   /* ── ENTRY LAYOUT ── */
   .entry-layout { display:grid; grid-template-columns:350px 1fr; gap:1rem; align-items:start; }
-  .panel { background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden; position:sticky; top:70px; }
+  .panel { background:#fff; border:1px solid var(--border); border-radius:8px; overflow:visible; position:sticky; top:70px; }
   .panel-hdr { background:var(--ink); color:var(--gold-light); padding:.65rem 1rem; font-size:.85rem; letter-spacing:.08em; font-weight:500; font-family:var(--font-serif); }
   .panel-hdr.mc { background:var(--purple); }
 
@@ -210,16 +210,19 @@
   .mhdr-bal.pos { background:#e8f7ee; color:var(--green); }
   .mhdr-bal.neg { background:#fdf0f0; color:var(--red); }
   .mttl { font-weight:500; color:var(--ink); font-family:var(--font-mono); }
-  .ei { padding:0 .75rem; height:42px; display:flex; align-items:center; gap:.5rem; border-bottom:1px solid var(--cream); transition:background .1s; overflow:hidden; }
+  .ei { padding:.45rem .75rem; display:flex; flex-direction:column; gap:.18rem; border-bottom:1px solid var(--cream); transition:background .1s; }
   .ei:last-child { border-bottom:none; }
   .ei:hover { background:rgba(245,240,232,.5); }
-  .edate { font-size:.76rem; color:var(--muted); width:42px; flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
-  .ebadge { font-size:.72rem; color:#fff; padding:.12rem .4rem; border-radius:10px; flex-shrink:0; letter-spacing:.02em; white-space:nowrap; }
+  .ei-row1 { display:flex; align-items:center; gap:.45rem; }
+  .ei-row2 { display:flex; align-items:center; gap:.4rem; padding-left:2px; }
+  .edate { font-size:.76rem; color:var(--muted); flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
+  .ebadge { font-size:.72rem; color:#fff; padding:.1rem .38rem; border-radius:10px; flex-shrink:0; letter-spacing:.02em; white-space:nowrap; }
   .b-inc { background:var(--green); }
   .b-exp { background:var(--muted); }
   .b-mc  { background:var(--purple); }
-  .etext { flex:1; font-size:.88rem; font-weight:300; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; min-width:0; }
-  .eamt { font-size:.9rem; font-weight:500; text-align:right; min-width:70px; flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
+  .etext { font-size:.88rem; font-weight:400; flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .ememo { font-size:.76rem; color:var(--muted); font-weight:300; flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .eamt { font-size:.92rem; font-weight:500; text-align:right; flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
   .eamt.inc-c { color:var(--green); }
   .edel { background:none; border:none; color:var(--border); cursor:pointer; font-size:.95rem; padding:.15rem; transition:color .15s; }
   .edel:hover { color:var(--red); }
@@ -297,7 +300,13 @@
   .mc-step:last-child { border-bottom:none; }
   .mc-recent-section { margin-bottom:.3rem; }
 
-  @media(max-width:900px) { .entry-layout{grid-template-columns:1fr;} .panel{position:static;} }
+  @media(max-width:900px) {
+    .entry-layout{grid-template-columns:1fr;}
+    .panel{position:static;}
+    .cat-grid{grid-template-columns:1fr 1fr;}
+    .mode-row{grid-template-columns:1fr 1fr;}
+    .fg input, .fg select{font-size:1rem;}
+  }
   @media(max-width:500px) { .hdr{padding:0 1rem;} }
 </style>
 </head>
@@ -1197,13 +1206,18 @@ function eHtml(e) {
   const catL=CL[e.cat]||'';
   const typeL=TL[e.type]||e.type||'';
   const label=typeL&&typeL!==catL?typeL:catL;
+  // メモから括弧を除去して表示
+  const memoTxt = e.memo ? e.memo.replace(/^（|）$/g,'') : '';
   return`<div class="ei">
-    <span class="edate">${e.date.slice(5)}</span>
-    <span class="ebadge ${isInc?'b-inc':'b-exp'}">${catL}</span>
-    <span class="etext">${label}${e.memo?'　'+e.memo:''}</span>
-    <span class="eamt ${isInc?'inc-c':''}">${isInc?'+':''}¥${fmt(e.amount)}</span>
-    <button class="edel" onclick="editEntry('${e.cat}',${e.id})" title="編集" style="color:#b0c4cc">✏️</button>
-    <button class="edel" onclick="delEntry('${e.cat}',${e.id})">✕</button>
+    <div class="ei-row1">
+      <span class="edate">${e.date.slice(5)}</span>
+      <span class="ebadge ${isInc?'b-inc':'b-exp'}">${catL}</span>
+      <span class="etext">${label}</span>
+      <span class="eamt ${isInc?'inc-c':''}">${isInc?'+':''}¥${fmt(e.amount)}</span>
+      <button class="edel" onclick="editEntry('${e.cat}',${e.id})" title="編集" style="color:#b0c4cc">✏️</button>
+      <button class="edel" onclick="delEntry('${e.cat}',${e.id})">✕</button>
+    </div>
+    ${memoTxt?`<div class="ei-row2"><span class="ememo">📝 ${memoTxt}</span></div>`:''}
   </div>`;
 }
 
