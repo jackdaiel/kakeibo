@@ -187,7 +187,7 @@
 
   /* Entry list */
   .elist { background:#fff; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
-  .mhdr { background:var(--cream); padding:.35rem .75rem; font-size:.77rem; color:var(--muted); font-weight:400; display:flex; justify-content:space-between; align-items:center; }
+  .mhdr { background:var(--cream); padding:0 .75rem; height:32px; font-size:.77rem; color:var(--muted); font-weight:400; display:flex; justify-content:space-between; align-items:center; }
   /* 合計バー */
   .ds-tot-bar { border-radius:8px; padding:.75rem 1rem; display:flex; align-items:center; justify-content:space-between; box-shadow:0 3px 12px rgba(0,0,0,.12); }
   .ds-tot-bar.bar-exp { background:linear-gradient(135deg,#e05555,#c03030); }
@@ -201,7 +201,7 @@
   .dtb-sub { font-size:.72rem; color:rgba(255,255,255,.8); font-family:var(--font-mono); }
   .dtb-count { font-size:.68rem; color:rgba(255,255,255,.6); }
   /* 月ヘッダー改善 */
-  .mhdr-new { padding:.5rem .75rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+  .mhdr-new { padding:0 .75rem; height:36px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
   .mhdr-month { font-size:.82rem; font-weight:600; color:var(--ink); }
   .mhdr-stats { display:flex; gap:.6rem; align-items:center; }
   .mhdr-inc { font-size:.75rem; color:var(--green); font-family:var(--font-mono); font-weight:500; }
@@ -210,16 +210,16 @@
   .mhdr-bal.pos { background:#e8f7ee; color:var(--green); }
   .mhdr-bal.neg { background:#fdf0f0; color:var(--red); }
   .mttl { font-weight:500; color:var(--ink); font-family:var(--font-mono); }
-  .ei { padding:.42rem .75rem; display:flex; align-items:center; gap:.5rem; border-bottom:1px solid var(--cream); transition:background .1s; }
+  .ei { padding:0 .75rem; height:42px; display:flex; align-items:center; gap:.5rem; border-bottom:1px solid var(--cream); transition:background .1s; overflow:hidden; }
   .ei:last-child { border-bottom:none; }
   .ei:hover { background:rgba(245,240,232,.5); }
-  .edate { font-size:.76rem; color:var(--muted); width:44px; flex-shrink:0; font-family:var(--font-mono); }
-  .ebadge { font-size:.75rem; color:#fff; padding:.1rem .38rem; border-radius:10px; flex-shrink:0; letter-spacing:.02em; }
+  .edate { font-size:.76rem; color:var(--muted); width:42px; flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
+  .ebadge { font-size:.72rem; color:#fff; padding:.12rem .4rem; border-radius:10px; flex-shrink:0; letter-spacing:.02em; white-space:nowrap; }
   .b-inc { background:var(--green); }
   .b-exp { background:var(--muted); }
   .b-mc  { background:var(--purple); }
-  .etext { flex:1; font-size:.9rem; font-weight:300; }
-  .eamt { font-size:.95rem; font-weight:500; text-align:right; min-width:75px; font-family:var(--font-mono); }
+  .etext { flex:1; font-size:.88rem; font-weight:300; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; min-width:0; }
+  .eamt { font-size:.9rem; font-weight:500; text-align:right; min-width:70px; flex-shrink:0; font-family:var(--font-mono); white-space:nowrap; }
   .eamt.inc-c { color:var(--green); }
   .edel { background:none; border:none; color:var(--border); cursor:pointer; font-size:.95rem; padding:.15rem; transition:color .15s; }
   .edel:hover { color:var(--red); }
