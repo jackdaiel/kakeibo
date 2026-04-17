@@ -662,23 +662,44 @@ function buildInvMaps() {
   Object.entries(CL).forEach(([k,v]) => { CL_INV[v] = k; });
 }
 function rowTypeToKey(label) { return TL_INV[label] || label || null; }
-function rowCatToKey(label)  { return CL_INV[label] || label || ''; }
+function rowCatToKey(label) {
+  if (!label) return '';
+  // CL_INV逆引き（例:「食費」→「shokuhi」）
+  if (CL_INV[label]) return CL_INV[label];
+  // mycar系はそのまま
+  if (label === 'mycar') return 'mycar';
+  // 直接キー名が来た場合（例:「shokuhi」）
+  if (CL[label]) return label;
+  // 一致しない場合はそのまま返す（sonota扱いになる）
+  return label;
+}
 
 // ── 行 → エントリ変換（2026dataの列順: ID,日付,金額,カテゴリ,種別,収支,備考,gasLiter,gasPrice）──
 function rowToEntry(row) {
-  if (!row[0] || row[0] === 'ID') return null;
-  // 新列構成: [ID, 年度, 日付, 金額, カテゴリ, 種別, 収支, 備考, ガソリン量, 単価, 入力日時]
+  // ヘッダー行スキップ（IDが'ID'文字列＝ヘッダー行のみスキップ）
+  if (row[0] === 'ID') return null;
+  // 列構成: A=ID, B=年度, C=日付, D=金額, E=カテゴリ, F=種別, G=収支, H=備考, I=ガソリン量, J=単価, K=入力日時
   const dateVal = row[2];
+  if (!dateVal) return null; // 日付なしは無視
   const dateStr = dateVal instanceof Date
     ? dateVal.toISOString().slice(0,10)
     : String(dateVal).slice(0,10);
+  if (!dateStr || dateStr === 'undefined') return null;
+
+  // IDが空の場合（SS直接入力行）はユニークIDを生成
+  const id = row[0] ? row[0] : `ss_${dateStr}_${row[3]}_${row[4]}`;
+
+  const catKey = rowCatToKey(String(row[4]||''));
+  const typeKey = rowTypeToKey(String(row[5]||''));
+  const modeVal = String(row[6]||'');
+
   return {
-    id:       row[0],
+    id:       id,
     date:     dateStr,
     amount:   parseFloat(row[3]) || 0,
-    cat:      rowCatToKey(String(row[4]||'')),
-    type:     rowTypeToKey(String(row[5]||'')),
-    mode:     String(row[6]||'') === '収入' ? 'income' : 'expense',
+    cat:      catKey || 'sonota', // カテゴリ不明はその他に
+    type:     typeKey,
+    mode:     modeVal === '収入' ? 'income' : 'expense',
     memo:     String(row[7]||''),
     gasLiter: row[8] ? parseFloat(row[8]) : null,
     gasPrice: row[9] ? parseFloat(row[9]) : null,
