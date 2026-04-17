@@ -307,6 +307,46 @@
     .mode-row{grid-template-columns:1fr 1fr;}
     .fg input, .fg select{font-size:1rem;}
   }
+
+  /* ── ツールバー ── */
+  .tool-bar {
+    margin-top:2rem; padding:1.2rem 1rem 1rem;
+    border-top:1px solid var(--border);
+  }
+  .tool-bar-inner {
+    display:flex; flex-direction:column; gap:.6rem;
+    max-width:400px; margin:0 auto;
+  }
+  .tool-btn {
+    display:flex; align-items:center; justify-content:center;
+    gap:.55rem; width:100%; padding:.78rem 1rem;
+    border-radius:8px; font-family:var(--font-serif);
+    font-size:.95rem; letter-spacing:.06em;
+    cursor:pointer; text-decoration:none;
+    transition:all .15s; border:none;
+  }
+  .tool-btn-icon { font-size:1.1rem; flex-shrink:0; }
+  .tool-btn-label { font-weight:500; }
+  /* Excel出力：黒×金 */
+  .tool-btn-xl {
+    background:var(--ink); color:var(--gold-light);
+    box-shadow:0 2px 10px rgba(26,24,20,.25);
+  }
+  .tool-btn-xl:active { background:#2a2620; }
+  /* Excel復元：アウトライン */
+  .tool-btn-outline {
+    background:transparent; color:var(--muted);
+    border:1.5px solid var(--border);
+  }
+  .tool-btn-outline:hover { border-color:var(--gold); color:var(--ink); }
+  /* SSを開く：ゴールドグラデーション */
+  .tool-btn-ss {
+    background:linear-gradient(135deg, var(--gold) 0%, #b8862e 100%);
+    color:#fff;
+    box-shadow:0 2px 10px rgba(180,140,60,.3);
+    font-weight:600;
+  }
+  .tool-btn-ss:active { opacity:.88; }
   @media(max-width:500px) { .hdr{padding:0 1rem;} }
 </style>
 </head>
@@ -353,15 +393,25 @@
       </table>
     </div>
 
-  <!-- Excel export at bottom of summary -->
-    <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.8rem;align-items:center">
-      <button onclick="exportExcel()" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:.9rem 2.2rem;font-family:var(--font-serif);font-size:1rem;cursor:pointer;letter-spacing:.08em;box-shadow:0 2px 8px rgba(46,107,69,.25);width:100%;max-width:380px">📊 Excel出力</button>
-      <label style="background:#fff;color:var(--ink);border:2px dashed var(--border);border-radius:8px;padding:.85rem 2.2rem;font-family:var(--font-serif);font-size:1rem;cursor:pointer;letter-spacing:.08em;width:100%;max-width:380px;text-align:center;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
-        📥 Excel復元
+  <!-- ツールバー（Excel・SS） -->
+  <div class="tool-bar">
+    <div class="tool-bar-inner">
+      <button class="tool-btn tool-btn-xl" onclick="exportExcel()">
+        <span class="tool-btn-icon">📊</span>
+        <span class="tool-btn-label">Excel 出力</span>
+      </button>
+      <label class="tool-btn tool-btn-outline">
+        <span class="tool-btn-icon">📥</span>
+        <span class="tool-btn-label">Excel 復元</span>
         <input type="file" accept=".xlsx" onchange="importExcel(event)" style="display:none">
       </label>
-      <div style="font-size:.78rem;color:var(--muted);text-align:center">復元は既存データとマージされます（重複除去）</div>
+      <a class="tool-btn tool-btn-ss" href="https://docs.google.com/spreadsheets/d/1MLvyr0CUGBA3oMYLTM_7Xh30fDnfPwtwab6h-AgoX_w/edit" target="_blank" rel="noopener">
+        <span class="tool-btn-icon">🗂️</span>
+        <span class="tool-btn-label">スプレッドシートを開く</span>
+      </a>
     </div>
+    <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Excel復元は既存データとマージされます（重複除去）</div>
+  </div>
   </div>
 
   <!-- ══════════ ENTRY ══════════ -->
