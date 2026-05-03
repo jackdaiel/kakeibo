@@ -398,16 +398,16 @@
     <div class="tool-bar-inner">
       <button class="tool-btn tool-btn-xl" onclick="exportExcel()">
         <span class="tool-btn-icon">📊</span>
-        <span class="tool-btn-label">Excel output</span>
+        <span class="tool-btn-label">Excel 出力</span>
       </button>
       <label class="tool-btn tool-btn-outline">
         <span class="tool-btn-icon">📥</span>
-        <span class="tool-btn-label">Excel input</span>
+        <span class="tool-btn-label">Excel 復元</span>
         <input type="file" accept=".xlsx" onchange="importExcel(event)" style="display:none">
       </label>
       <a class="tool-btn tool-btn-ss" href="https://docs.google.com/spreadsheets/d/1MLvyr0CUGBA3oMYLTM_7Xh30fDnfPwtwab6h-AgoX_w/edit" target="_blank" rel="noopener">
         <span class="tool-btn-icon">🗂️</span>
-        <span class="tool-btn-label">Open spreadsheet</span>
+        <span class="tool-btn-label">スプレッドシートを開く</span>
       </a>
     </div>
     <div style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Excel復元は既存データとマージされます（重複除去）</div>
@@ -673,7 +673,12 @@ const MC_CHIPS = {
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
-let FY = 2025;
+function calcCurrentFY() {
+  const now = new Date(new Date().getTime() + 9*60*60*1000);
+  const m = now.getMonth() + 1, y = now.getFullYear();
+  return m >= 4 ? y : y - 1;
+}
+let FY = calcCurrentFY();
 let eMode = null, eCat = null, eSubtype = null;
 let _editingId = null; // 編集中エントリID
 let mcType = null;
